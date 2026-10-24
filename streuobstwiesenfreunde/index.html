@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Mitgliedsantrag Streuobstwiesenfreunde e.V.</title>
+
+<script src="../assets/jspdf.umd.min.js"></script>
+<style>
+/* Layout: eine schmale Formularspalte, Abschnitte als Karten; Vereinsfarbe wechselt über data-verein */
+:root{
+  --bg:#F3F5F2; --surface:#FFFFFF; --fg:#16231D; --muted:#5C6A64; --line:#D4DDD8;
+  --accent:#1A4A3F; --accent-soft:#DCEBE4; --on-accent:#FFFFFF; --bad:#B3261E; --ok:#2C7A4E;
+  --display:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+:root[data-verein="streuobstwiesenfreunde"]{--accent:#3E6B23; --accent-soft:#E2EED7}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1613;--surface:#15211D;--fg:#E4EEE9;--muted:#94A79F;--line:#2B3B35;--accent:#86CDB4;--accent-soft:#1D3830;--on-accent:#0E1613;--bad:#F2897E;--ok:#6FC896;color-scheme:dark}
+  :root[data-verein="streuobstwiesenfreunde"]:not([data-theme="light"]){--accent:#A9D37E;--accent-soft:#25351B}}
+:root[data-theme="dark"]{--bg:#0E1613;--surface:#15211D;--fg:#E4EEE9;--muted:#94A79F;--line:#2B3B35;--accent:#86CDB4;--accent-soft:#1D3830;--on-accent:#0E1613;--bad:#F2897E;--ok:#6FC896;color-scheme:dark}
+:root[data-theme="dark"][data-verein="streuobstwiesenfreunde"]{--accent:#A9D37E;--accent-soft:#25351B}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15.5px/1.55 var(--body);margin:0}
+footer{margin-top:28px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+h1,h2{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:30px}
+h2{font-size:18px}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.head{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px;display:flex;flex-direction:column;gap:14px;margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.lbl{font-size:13.5px;font-weight:500;color:var(--muted)}
+.req::after{content:" *";color:var(--bad)}
+input[type=text],input[type=email],input[type=tel],input[type=date],select{font:inherit;color:inherit;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible,.choice:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:minmax(0,7em) minmax(0,1fr);gap:12px}
+@media (max-width:440px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.check input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.choice input{margin-top:3px;accent-color:var(--accent)}
+.choice:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+.tag input{accent-color:var(--accent)}
+.tag:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-weight:500}
+.dsgvo{font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.sig{border:1.5px dashed var(--line);border-radius:12px;background:#FFFFFF;touch-action:none;width:100%;height:160px;display:block}
+.sigrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:10px 16px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);padding:13px 18px;font-size:16px}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.err{color:var(--bad);font-size:14px}
+.minor{display:none}
+.minor.on{display:flex}
+.done{background:var(--accent-soft);border-color:var(--accent)}
+.mail{font-weight:600;user-select:all;overflow-wrap:anywhere}
+.pick{display:flex;flex-direction:column;gap:12px}
+.pick a{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.pick a:hover{border-color:var(--accent)}
+textarea{font:inherit;color:inherit;width:100%;min-height:180px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg)}
+</style>
+</head>
+<body>
+
+<script>document.documentElement.setAttribute("data-verein","streuobstwiesenfreunde")</script>
+<div class="wrap" id="app"><div class="head"><span class="eyebrow">Mitgliedsantrag</span><h1>Antrag auf Mitgliedschaft</h1></div></div>
+
+<script>
+(() => {
+"use strict";
+// Stammdaten je Verein. Gläubiger-ID leer = keine Lastschrift, nur Überweisung/Dauerauftrag.
+const VEREINE = {
+  kulturoase: {
+    vorstand: "Christoph Rödiger (1. Vorsitzender), Klaus Zebe (2. Vorsitzender), Olivia Pellenat (Schatzmeisterin); vertreten durch zwei Vorstandsmitglieder gemeinsam", verantwortlich: "Christoph Rödiger, Nordhäuser Str. 3, 99089 Erfurt",
+    name: "KulturOase e.V.", ort: "Erfurt", adresse: "Nordhäuser Str. 3, 99089 Erfurt", mail: "vereinkulturoase@gmail.com",
+    register: "Vereinsregister Amtsgericht Erfurt, VR 163263",
+    zweck: "Wir fördern Kunst und Kultur in Erfurt: Bühnen beim Krämerbrückenfest und der Fête de la Musique, Heimlich Advent, Workshops für Kinder und Mitglieder.",
+    iban: "DE48 8205 1000 0163 1708 27", bank: "Sparkasse Mittelthüringen", glaeubigerId: "",
+    beitraege: [{ id: "std", label: "Mitgliedsbeitrag laut Beitragsordnung", hint: "Höhe und Fälligkeit beschließt die Mitgliederversammlung." }],
+    mitmachen: ["Bühnen- und Veranstaltungstechnik", "Auf- und Abbau", "Workshops mit Kindern", "Bühnenbild und Deko", "Öffentlichkeitsarbeit", "Organisation"],
+    minderjaehrig: "Bei Minderjährigen stellt der gesetzliche Vertreter den Antrag."
+  },
+  streuobstwiesenfreunde: {
+    vorstand: "Michael Linke (1. Vorsitzender), Christoph Rödiger (stellv. Vorsitzender), Tobias Bube (Schatzmeister); vertreten durch zwei Vorstandsmitglieder gemeinsam", verantwortlich: "Michael Linke, Herzberger Str. 4, 99092 Erfurt",
+    name: "Streuobstwiesenfreunde e.V.", ort: "Erfurt", adresse: "Herzberger Str. 4, 99092 Erfurt", mail: "streuobstwiesenfreunde@gmx.de",
+    register: "Gemeinnütziger Verein, Steuernummer 151/142/09349",
+    zweck: "Wir pflegen Streuobstwiesen in Erfurt und Umgebung, erhalten alte Obstsorten und machen Natur für Kinder und Jugendliche erlebbar.",
+    iban: "DE69 8205 1000 0163 1530 86", bank: "Sparkasse Mittelthüringen", glaeubigerId: "",
+    beitraege: [{ id: "voll", label: "15 € im Jahr", hint: "für Mitglieder mit eigenem Einkommen" }, { id: "frei", label: "Freiwilliger Beitrag", hint: "für Mitglieder ohne eigenes Einkommen" }],
+    mitmachen: ["Baumpflege und Schnitt", "Ernte und Mosten", "Imkerei", "Kinder- und Jugendarbeit", "Feste und Veranstaltungen", "Öffentlichkeitsarbeit"],
+    minderjaehrig: "Bei Minderjährigen stellt der gesetzliche Vertreter den Antrag (§ 3 der Satzung)."
+  }
+};
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const fD = s => { if (!s) return ""; const [y, m, d] = s.split("-"); return `${d}.${m}.${y}`; };
+const ageOn = (birth) => { const b = new Date(birth), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--; return a; };
+
+function picker() {
+  document.documentElement.removeAttribute("data-verein");
+  app.innerHTML = `<div class="head"><span class="eyebrow">Mitgliedsantrag</span><h1>Bei welchem Verein möchtest du Mitglied werden?</h1></div>
+  <div class="pick">${Object.entries(VEREINE).map(([k, v]) => `<a href="#${k}"><strong>${esc(v.name)}</strong><span class="small muted">${esc(v.zweck)}</span></a>`).join("")}</div>`;
+}
+
+function form(key) {
+  const v = VEREINE[key];
+  document.documentElement.setAttribute("data-verein", key);
+  const pay = v.glaeubigerId ? "Lastschrift" : "Überweisung";
+  app.innerHTML = `<div class="head"><span class="eyebrow">${esc(v.name)}</span><h1>Antrag auf Mitgliedschaft</h1>
+    <p class="muted">${esc(v.zweck)} Füll den Antrag aus, unterschreib unten und lade das PDF herunter. Dann schick es per E-Mail an <span class="mail">${esc(v.mail)}</span>.</p></div>
+  <form id="f" novalidate>
+    <section class="card"><h2>Zu deiner Person</h2>
+      <div class="grid2"><div class="field"><label class="req" for="vn">Vorname</label><input id="vn" name="vorname" type="text" autocomplete="given-name" required></div>
+        <div class="field"><label class="req" for="nn">Nachname</label><input id="nn" name="nachname" type="text" autocomplete="family-name" required></div></div>
+      <div class="field"><label class="req" for="gb">Geburtsdatum</label><input id="gb" name="geburt" type="date" autocomplete="bday" required></div>
+      <div class="field"><label class="req" for="st">Straße und Hausnummer</label><input id="st" name="strasse" type="text" autocomplete="street-address" required></div>
+      <div class="grid3"><div class="field"><label class="req" for="plz">PLZ</label><input id="plz" name="plz" type="text" inputmode="numeric" autocomplete="postal-code" required></div>
+        <div class="field"><label class="req" for="ort">Ort</label><input id="ort" name="ort" type="text" autocomplete="address-level2" required></div></div>
+      <div class="grid2"><div class="field"><label class="req" for="em">E-Mail</label><input id="em" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="tel">Telefon (freiwillig)</label><input id="tel" name="telefon" type="tel" autocomplete="tel"></div></div>
+    </section>
+    <section class="card minor" id="minor"><h2>Erziehungsberechtigte Person</h2><p class="small muted">${esc(v.minderjaehrig)} Unterschreiben muss dann die erziehungsberechtigte Person.</p>
+      <div class="field"><label class="req" for="ev">Name der erziehungsberechtigten Person</label><input id="ev" name="vertreter" type="text"></div>
+    </section>
+    <section class="card"><h2>Beitrag</h2>
+      <div class="choices" role="radiogroup" aria-label="Beitrag">${v.beitraege.map((b, i) => `<label class="choice"><input type="radio" name="beitrag" value="${esc(b.label)}" ${i === 0 ? "checked" : ""}><span><strong>${esc(b.label)}</strong><br><span class="small muted">${esc(b.hint)}</span></span></label>`).join("")}</div>
+      <p class="small muted">Zahlung per ${pay} auf das Vereinskonto: ${esc(v.bank)}, IBAN ${esc(v.iban)}. Die Details schicken wir dir mit der Aufnahmebestätigung.</p>
+    </section>
+    <section class="card"><h2>Mitmachen (freiwillig)</h2><p class="small muted">Wo würdest du gern mit anpacken?</p>
+      <div class="tags">${v.mitmachen.map((m, i) => `<label class="tag"><input type="checkbox" name="mitmachen" value="${esc(m)}">${esc(m)}</label>`).join("")}</div>
+    </section>
+    <section class="card"><h2>Erklärungen</h2>
+      <label class="check"><input type="checkbox" name="satzung" required><span class="req">Ich erkenne die Satzung von ${esc(v.name)} an.</span></label>
+      <label class="check"><input type="checkbox" name="datenschutz" required><span class="req">Ich habe die Datenschutzhinweise gelesen.</span></label>
+      <label class="check"><input type="checkbox" name="fotos"><span>Fotos, auf denen ich zu sehen bin, dürfen für die Öffentlichkeitsarbeit des Vereins genutzt werden (Website, Social Media, Presse). Widerruf jederzeit möglich.</span></label>
+      <label class="check"><input type="checkbox" name="mailinfo" checked><span>Einladungen und Vereinsinfos per E-Mail.</span></label>
+      <details><summary>Datenschutzhinweise lesen</summary><div class="dsgvo">
+        <p><strong>Verantwortlich:</strong> ${esc(v.name)}, ${esc(v.adresse)}, ${esc(v.mail)}.</p>
+        <p><strong>Zweck:</strong> Wir verarbeiten deine Angaben, um deine Mitgliedschaft zu verwalten, Beiträge abzuwickeln und dich über Vereinsangelegenheiten zu informieren (Art. 6 Abs. 1 lit. b DSGVO). Freiwillige Angaben und Foto-Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.</p>
+        <p><strong>Weitergabe:</strong> Nur an den Vorstand und, soweit nötig, an Behörden und Fördermittelgeber (z. B. Namen und Funktion bei Ehrenamtspauschalen). Kein Verkauf, keine Werbung.</p>
+        <p><strong>Speicherdauer:</strong> Bis zum Ende der Mitgliedschaft, danach nur so lange, wie Steuer- und Förderrecht es verlangen (in der Regel 10 Jahre für Buchungsbelege).</p>
+        <p><strong>Diese Webseite:</strong> Deine Eingaben bleiben in deinem Browser. Das PDF entsteht auf deinem Gerät, es wird nichts an uns oder Dritte übertragen. Wir setzen keine Cookies und kein Tracking. Die Seite liegt bei GitHub Pages (GitHub Inc./Microsoft, USA, zertifiziert nach dem EU-US Data Privacy Framework). Beim Aufruf verarbeitet GitHub technisch notwendige Verbindungsdaten wie die IP-Adresse (Art. 6 Abs. 1 lit. f DSGVO).</p>
+        <p><strong>Deine Rechte:</strong> Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch, Widerruf von Einwilligungen und Beschwerde beim Thüringer Landesbeauftragten für den Datenschutz.</p>
+      </div></details>
+    </section>
+    <section class="card"><h2 id="sigTitle">Unterschrift</h2>
+      <div class="grid2"><div class="field"><label class="req" for="uo">Ort</label><input id="uo" name="uort" type="text" value="${esc(v.ort)}"></div>
+        <div class="field"><label class="req" for="ud">Datum</label><input id="ud" name="udatum" type="date" value="${today()}"></div></div>
+      <div class="sigrow"><span class="lbl req" id="sigLbl">Mit dem Finger oder der Maus unterschreiben</span><button class="btn sm" type="button" id="clr">Löschen</button></div>
+      <canvas class="sig" id="sig" aria-labelledby="sigLbl"></canvas>
+    </section>
+    <p class="err" id="err" role="alert"></p>
+    <div class="btnrow"><button class="btn primary" type="submit">Antrag als PDF herunterladen</button></div>
+  </form>
+  <div id="after"></div>
+  <footer><details><summary>Impressum</summary><div class="dsgvo"><p>${esc(v.name)}<br>${esc(v.adresse)}<br>E-Mail: ${esc(v.mail)}</p><p>Vorstand: ${esc(v.vorstand)}</p><p>${esc(v.register)}</p><p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${esc(v.verantwortlich)}</p></div></details></footer>`;
+  setup(key);
+}
+
+function setup(key) {
+  const f = document.getElementById("f"), c = document.getElementById("sig"), ctx = c.getContext("2d");
+  let drawn = false, drawing = false;
+  const size = () => { const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; const img = drawn ? c.toDataURL() : null;
+    c.width = r.width * dpr; c.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.strokeStyle = "#14231E"; if (img) { const i = new Image(); i.onload = () => ctx.drawImage(i, 0, 0, r.width, r.height); i.src = img; } };
+  size(); window.addEventListener("resize", size);
+  const pt = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  c.addEventListener("pointerdown", e => { drawing = true; c.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pt(e)); });
+  c.addEventListener("pointermove", e => { if (!drawing) return; ctx.lineTo(...pt(e)); ctx.stroke(); drawn = true; });
+  ["pointerup", "pointercancel"].forEach(t => c.addEventListener(t, () => { drawing = false; }));
+  document.getElementById("clr").onclick = () => { ctx.clearRect(0, 0, c.width, c.height); drawn = false; };
+  const gb = f.elements.geburt, minor = document.getElementById("minor");
+  gb.addEventListener("change", () => { const m = gb.value && ageOn(gb.value) < 18; minor.classList.toggle("on", !!m);
+    document.getElementById("sigTitle").textContent = m ? "Unterschrift der erziehungsberechtigten Person" : "Unterschrift"; });
+  f.addEventListener("submit", async e => {
+    e.preventDefault();
+    const err = document.getElementById("err"); err.textContent = "";
+    const g = n => (f.elements[n].value || "").trim();
+    const missing = ["vorname", "nachname", "geburt", "strasse", "plz", "ort", "email", "uort", "udatum"].filter(n => !g(n));
+    const isMinor = g("geburt") && ageOn(g("geburt")) < 18;
+    if (isMinor && !g("vertreter")) missing.push("vertreter");
+    if (missing.length) { err.textContent = "Bitte alle Pflichtfelder ausfüllen."; f.elements[missing[0]].focus(); return; }
+    if (!/^\S+@\S+\.\S+$/.test(g("email"))) { err.textContent = "Bitte eine gültige E-Mail-Adresse eingeben."; f.elements.email.focus(); return; }
+    if (!f.elements.satzung.checked || !f.elements.datenschutz.checked) { err.textContent = "Bitte Satzung und Datenschutzhinweise bestätigen."; return; }
+    if (!drawn) { err.textContent = "Bitte unterschreiben."; c.scrollIntoView({ block: "center" }); return; }
+    const d = { vorname: g("vorname"), nachname: g("nachname"), geburt: g("geburt"), strasse: g("strasse"), plz: g("plz"), ort: g("ort"), email: g("email"), telefon: g("telefon"),
+      vertreter: isMinor ? g("vertreter") : "", beitrag: (f.querySelector("input[name=beitrag]:checked") || {}).value || "",
+      mitmachen: [...f.querySelectorAll("input[name=mitmachen]:checked")].map(x => x.value), fotos: f.elements.fotos.checked, mailinfo: f.elements.mailinfo.checked,
+      uort: g("uort"), udatum: g("udatum"), sig: c.toDataURL("image/png") };
+    await deliver(key, d);
+  });
+}
+
+function pdfBlob(v, d) {
+  const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const L = 20, W = 170; let y = 22;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text(v.name, L, y);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(90); doc.text(`${v.adresse} · ${v.mail} · ${v.register}`, L, y += 6);
+  doc.setTextColor(0); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("Antrag auf Mitgliedschaft", L, y += 14);
+  doc.setFontSize(10); doc.setFont("helvetica", "normal");
+  const row = (k, val) => { doc.setFont("helvetica", "bold"); doc.text(k, L, y); doc.setFont("helvetica", "normal"); const lines = doc.splitTextToSize(val || "–", W - 48); doc.text(lines, L + 48, y); y += 6 * Math.max(1, lines.length); };
+  y += 9;
+  row("Name", `${d.vorname} ${d.nachname}`); row("Geburtsdatum", fD(d.geburt)); row("Anschrift", `${d.strasse}, ${d.plz} ${d.ort}`);
+  row("E-Mail", d.email); row("Telefon", d.telefon); if (d.vertreter) row("Erziehungsberechtigt", d.vertreter);
+  row("Beitrag", d.beitrag.replace("€", "EUR")); row("Zahlung", `Überweisung auf ${v.bank}, IBAN ${v.iban}`); row("Mitmachen bei", d.mitmachen.join(", "));
+  y += 4; doc.setFont("helvetica", "bold"); doc.text("Erklärungen", L, y); y += 6; doc.setFont("helvetica", "normal");
+  const tick = (on, t) => { doc.rect(L, y - 3.2, 3.6, 3.6); if (on) { doc.line(L + .6, y - 1.4, L + 1.6, y - .2); doc.line(L + 1.6, y - .2, L + 3.2, y - 2.8); }
+    const lines = doc.splitTextToSize(t, W - 8); doc.text(lines, L + 6, y); y += 5 * lines.length + 1.5; };
+  tick(true, `Ich beantrage die Aufnahme in den Verein ${v.name} und erkenne die Satzung an.`);
+  tick(true, "Ich habe die Datenschutzhinweise zur Kenntnis genommen.");
+  tick(d.fotos, "Einwilligung: Fotos, auf denen ich zu sehen bin, dürfen für die Öffentlichkeitsarbeit des Vereins genutzt werden. Widerruf jederzeit möglich.");
+  tick(d.mailinfo, "Einladungen und Vereinsinfos per E-Mail.");
+  if (d.vertreter) tick(true, `${v.minderjaehrig} Antrag gestellt durch: ${d.vertreter}.`);
+  y += 6; doc.text(`${d.uort}, ${fD(d.udatum)}`, L, y + 22);
+  doc.addImage(d.sig, "PNG", L + 70, y, 80, 26); doc.line(L + 70, y + 27, L + W, y + 27);
+  doc.setFontSize(8.5); doc.setTextColor(90); doc.text(d.vertreter ? "Unterschrift der erziehungsberechtigten Person" : "Unterschrift", L + 70, y + 31);
+  y += 44; doc.setDrawColor(200); doc.line(L, y, L + W, y); y += 6;
+  doc.text("Vom Verein auszufüllen:   Aufnahme beschlossen am ______________   Mitgliedsnummer ________   Vorstand ______________", L, y);
+  doc.text(`Erstellt mit dem digitalen Mitgliedsantrag am ${fD(today())}. Bitte an ${v.mail} senden.`, L, 285);
+  return doc.output("blob");
+}
+
+function textVersion(v, d) {
+  return `Antrag auf Mitgliedschaft – ${v.name}\n\nName: ${d.vorname} ${d.nachname}\nGeburtsdatum: ${fD(d.geburt)}\nAnschrift: ${d.strasse}, ${d.plz} ${d.ort}\nE-Mail: ${d.email}\nTelefon: ${d.telefon || "–"}\n${d.vertreter ? `Erziehungsberechtigt: ${d.vertreter}\n` : ""}Beitrag: ${d.beitrag}\nMitmachen bei: ${d.mitmachen.join(", ") || "–"}\n\nIch beantrage die Aufnahme und erkenne die Satzung an. Datenschutzhinweise gelesen.\nFoto-Einwilligung: ${d.fotos ? "ja" : "nein"}\nVereinsinfos per E-Mail: ${d.mailinfo ? "ja" : "nein"}\n\n${d.uort}, ${fD(d.udatum)}`;
+}
+
+async function deliver(key, d) {
+  const v = VEREINE[key];
+  const file = `${today()}_Aufnahmeantrag_${(d.nachname + "-" + d.vorname).replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss").replace(/[^A-Za-z0-9-]+/g, "")}.pdf`;
+  const after = document.getElementById("after");
+  let saved = false, why = "";
+  if (window.jspdf) {
+    try { const url = URL.createObjectURL(pdfBlob(v, d)); const a = document.createElement("a"); a.href = url; a.download = file;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); saved = true; }
+    catch (e) { why = "fail"; }
+  }
+  if (saved) {
+    after.innerHTML = `<section class="card done"><h2>Fertig, das PDF ist heruntergeladen</h2>
+      <p>Schick es jetzt bitte per E-Mail an <span class="mail">${esc(v.mail)}</span>. Der Vorstand meldet sich mit der Aufnahmebestätigung bei dir.</p>
+      <div class="btnrow"><button class="btn" type="button" id="copyMail">E-Mail-Adresse kopieren</button></div></section>`;
+  } else {
+    after.innerHTML = `<section class="card"><h2>${why === "declined" ? "Download abgebrochen" : "Download hier nicht möglich"}</h2>
+      <p class="small">Kopier stattdessen den Text unten und schick ihn per E-Mail an <span class="mail">${esc(v.mail)}</span>. Die Unterschrift holen wir beim nächsten Treffen nach.</p>
+      <textarea id="txt" readonly aria-label="Antrag als Text">${esc(textVersion(v, d))}</textarea>
+      <div class="btnrow"><button class="btn" type="button" id="copyTxt">Text kopieren</button><button class="btn" type="button" id="copyMail">E-Mail-Adresse kopieren</button>${why === "declined" ? `<button class="btn" type="button" id="retry">PDF erneut versuchen</button>` : ""}</div></section>`;
+    const t = document.getElementById("txt");
+    document.getElementById("copyTxt").onclick = async () => { try { await navigator.clipboard.writeText(t.value); } catch (_) { t.focus(); t.select(); } };
+    const r = document.getElementById("retry"); if (r) r.onclick = () => deliver(key, d);
+  }
+  document.getElementById("copyMail").onclick = async e => { try { await navigator.clipboard.writeText(v.mail); e.target.textContent = "Kopiert"; } catch (_) {} };
+  after.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+form("streuobstwiesenfreunde");
+})();
+</script>
+
+</body>
+</html>
